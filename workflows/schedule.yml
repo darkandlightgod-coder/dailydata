@@ -4,8 +4,10 @@ on:
   schedule:
     # 每天定時執行：UTC 22:30 等於台灣時間早上 06:30
     - cron: '30 22 * * *'
-  # 加上這行，就能在 GitHub 網頁上手動點擊測試
   workflow_dispatch: 
+
+permissions:
+  contents: write # 賦予 GitHub Actions 寫入權限，用來自動提交保活更新
 
 jobs:
   build:
@@ -21,4 +23,16 @@ jobs:
           cache: 'pip'
           
       - name: Install dependencies
-        run: pip install -r requirements.
+        run: pip install -r requirements.txt
+          
+      - name: Run script
+        env:
+          CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
+          MOENV_API_KEY: ${{ secrets.MOENV_API_KEY }}
+          LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+        run: python morning_report.py
+
+      # 自動防止 GitHub 因 60 天無活動而暫停排程
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@v2
+
